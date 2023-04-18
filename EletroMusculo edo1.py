@@ -21,9 +21,9 @@ t0 = 0      # Tempo inicial (s)
 y0 = np.array([I0, x0, v0])  # Vetor de condições iniciais
 
 # Função que calcula a densidade de fluxo magnético no entreferro em função da corrente elétrica na bobina e da posição da barra de ferro
-def calc_B(I, B):
+def calc_B(I, x):
     B = mu0 * N * I / g
-    if B >= 0.0:
+    if x.all() >= 0.0:
         return B
     else:
         return 0
@@ -37,27 +37,27 @@ def dydt(t, y):
     F = (B**2 * A * N**2) / (2 * mu0 * g * mur) * (mur + 1)
     
     # Derivada da corrente elétrica na bobina (que é constante)
-    dIdt = 0
+    dIdt = 1
     
     # Derivada da posição da barra de ferro
     dxdt = v
     
     # Derivada da velocidade da barra de ferro
-    dvdt = F / m
+    dvdt = F 
     
     return [dIdt, dxdt, dvdt]
 
 # Solução numérica das EDOs
-tf = 1.5
-sol = solve_ivp(dydt, [t0, tf], y0, t_eval=np.linspace(t0, tf, 1000))
+tf = 5
+sol = solve_ivp(dydt, [t0, tf], y0, t_eval=np.linspace(t0, tf, 50000))
 
 # Plotagem dos resultados
 plt.figure(figsize=(12, 6))
-plt.plot(sol.t, sol.y[0], label='Corrente elétrica')
+plt.plot(sol.t, sol.y[0], label='Corrente elétrica' , color='red')
 plt.plot(sol.t, np.squeeze(sol.y[1]), label='Posição da barra de ferro')
-plt.plot(sol.t, sol.y[2], label='Velocidade da barra de ferro')
-plt.plot(sol.t, (calc_B(I0, sol.y[1].flatten()) * A * N)**2 / (2 * mu0 * g * mur * (mur + 1)), label='Força magnética')
+plt.plot(sol.t, sol.y[2], label='Força magnética')
 plt.xlabel('Tempo (s)')
+plt.ylabel('Força (N)')
 plt.legend()
 plt.show()
 
