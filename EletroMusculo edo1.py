@@ -17,18 +17,17 @@ v0 = 0      # Velocidade inicial da barra de ferro (m/s)
 
 # Condições iniciais
 I0 = 1      # Corrente elétrica inicial na bobina (A)
-t0 = 0      # Tempo inicial (s)
+t0 = -0.0025     # Tempo inicial (s)
 y0 = np.array([I0, x0, v0])  # Vetor de condições iniciais
 
-B0 = 0
+B0 = 0.502
 F0 = 0
-y01 = np.array([B0, F0, v0])  # Vetor de condições iniciais
 
 
 # Função que calcula a densidade de fluxo magnético no entreferro em função da corrente elétrica na bobina e da posição da barra de ferro
 def calc_B(I, x):
     B = mu0 * N * I / g
-    if x.all() >= 0.0:
+    if x.all() <= 0.0:
         return B
     else:
         return 0
@@ -39,62 +38,58 @@ def calc_B1(I, s):
         return B1
     else:
         return 0
+pot = 2
+
+Bp = B0**pot
+def calc_F(Bp, g):
+    F = (Bp * A * N**2) / (2 * mu0 * g * mur) * (mur + 1)
+    if g >= 0.000000:
+        return F
+    else:
+        return 0
+    
+F = calc_F(B0,g)
+y01 = np.array([B0, F, v0])  # Vetor de condições iniciais
 
 
 # Função que retorna as derivadas das variáveis de estado
 def dydt(t, y):
-    I, x, v = y
-    
+    I, x, s1 = y
+ 
     # Calcula a força magnética no entreferro
     B = calc_B(I, x)
-    F = (B**2 * A * N**2) / (2 * mu0 * g * mur) * (mur + 1)
+    #B1=calc_B1(I, s)
+ 
+    F = calc_F(Bp, s1)
     
     # Derivada da corrente elétrica na bobina (que é constante)
     dIdt = 1
     
     # Derivada da posição da barra de ferro
-    dxdt = v
+    dBdg  = (mu0 * N * I) / g**2
     
     # Derivada da velocidade da barra de ferro
-    dvdt = F/m 
+    dFdg = (Bp * A * N**2) / (2 * mu0 * g**2 * mur) * (mur + 1)
     
-    return [dIdt, dxdt, dvdt]
+    return [dIdt, dBdg, dFdg]
 
 
 
 # Solução numérica das EDOs
-tf = 0.0025
-sol = solve_ivp(dydt, [t0, tf], y0, t_eval=np.linspace(t0, tf, 50000))
+tf = 0.0
+sol = solve_ivp(dydt, [t0, tf], y01, t_eval=np.linspace(t0, tf))
 
-def dy1dt(t, y1):
-    I, s, vi = y1
-    
-    
 
-    # Calcula a força magnética no entreferro
-    B1 = calc_B1(I, s)
-    F1 = (B1**2 * A * N**2) / (2 * mu0 * g**2 * mur) * (mur + 1)
-    vi = x0 / V
-    # Derivada da corrente elétrica na bobina (que é constante)
-    dBdg = B1
 
-    # Derivada da posição da barra de ferro
-    dFdg = F1
-    
-    # Derivada da velocidade da barra de ferro
-    dvidt = vi 
-    
-    return [dBdg, dFdg, dvidt]
-xf = 0
+
 #sol = solve_ivp(dy1dt, [x0, xf], y01, t_eval=np.linspace(x0, xf, 25))
 
-
 # Plotagem dos resultados
-plt.figure(figsize=(12, 6))
-plt.plot(sol.t, sol.y[0], label='Corrente elétrica' , color='red')
-plt.plot(sol.t, np.squeeze(sol.y[1]), label='Posição da barra de ferro')
+plt.figure(figsize=(12, 8))
+#plt.plot(sol.t, sol.y[0], label='Corrente elétrica' , color='red')
+plt.plot(sol.t, sol.y[1], label='Densidade de Fluxo')
 plt.plot(sol.t, sol.y[2], label='Força magnética')
-plt.xlabel('Tempo (s)')
+plt.xlabel('Entreferro (M)')
 plt.ylabel('Força (N)')
 plt.legend()
 plt.show()
