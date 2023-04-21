@@ -63,10 +63,11 @@ def dydt(g, y):
 
 # Solução numérica das EDOs
 xf = -0.000001
-sol = solve_ivp(dydt, [x0, xf], y01, t_eval=np.linspace(x0, xf, 50))
+sol = solve_ivp(dydt, [x0, xf], y01, t_eval=np.linspace(x0, xf, 6))
 
 
-
+print(sol.y[0])
+print(sol.y[1])
 
 #sol = solve_ivp(dy1dt, [x0, xf], y01, t_eval=np.linspace(x0, xf, 25))
 
