@@ -1,8 +1,13 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+import math
 
 # Parâmetros do sistema
+
+V = 0.336      # Tensão(Watts)
+r = 0.336   # Resistência do fio (ohms)
+c = 157.08  # Comprimento do fio (m)
 L = 0.1     # Indutância da bobina (henrys)
 N = 1000    # Número de espiras da bobina
 g = 0.0025  # Comprimento do entreferro (m)
@@ -12,11 +17,13 @@ mur = 2500  # Permeabilidade relativa do material do núcleo
 m =  0.002454     # Massa da barra de ferro (kg)
 x0 = -0.0025  # Posição inicial da barra de ferro (m)
 v0 = 0      # Velocidade inicial da barra de ferro (m/s)
+t0 = 0
 
 # Condições iniciais
-I0 = 1 
-I = I0      # Corrente elétrica inicial na bobina (A)
-B0 = 0.502
+I0 = 0 
+I = I0 + 1      # Corrente elétrica inicial na bobina (A)
+B0 = 0
+B02 = 0
 
 
 # Função que calcula a densidade de fluxo magnético no entreferro em função da corrente elétrica na bobina e da posição da barra de ferro
@@ -44,7 +51,7 @@ B1 = (mu0 * N * I) / g**2
 B1 = calc_B(I, g)   
 F = calc_F(B,g)
 y01 = np.array([B, F])  # Vetor de condições iniciais
-
+y02 = np.array([B0, B02])  # Vetor de condições iniciais
 
 # Função que retorna as derivadas das variáveis de estado
 def dydt(g, y):
@@ -60,16 +67,31 @@ def dydt(g, y):
     return [dBdg, dFdg]
 
 
+def dIdt(I1, y1):
+   
+
+    dBdi = mu0 * N * I1 / g
+
+    dBdi2 = (mu0 * N * (I1**2)) /(2 * g)
+
+    return [dBdi, dBdi2]
 
 # Solução numérica das EDOs
 xf = -0.000001
 sol = solve_ivp(dydt, [x0, xf], y01, t_eval=np.linspace(x0, xf, 6))
 
+sol1 = solve_ivp(dIdt, [I0, I], y02, t_eval=np.linspace(I0, I, 10))
 
+
+u = B1**2
+print(u)
 print(sol.y[0])
 print(sol.y[1])
 
-#sol = solve_ivp(dy1dt, [x0, xf], y01, t_eval=np.linspace(x0, xf, 25))
+
+print(sol1.y[0])
+print(sol1.y[1])
+
 
 # Plotagem dos resultados
 
@@ -88,4 +110,16 @@ plt.legend()
 plt.show()
 
 
+plt.figure(figsize=(12, 8))
+plt.plot(sol1.t, sol1.y[0], label='Densidade de Fluxo', color = 'b')
+plt.xlabel('Corrente (A)')
+plt.ylabel('Densidade de Fluxo (B)')
+plt.legend()
+plt.show()
 
+plt.figure(figsize=(12, 8))
+plt.plot(sol1.t, sol1.y[1], label='Densidade de Fluxo derivado', color = 'b')
+plt.xlabel('Corrente (A)')
+plt.ylabel('Densidade de Fluxo (B)')
+plt.legend()
+plt.show()
